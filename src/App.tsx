@@ -95,10 +95,28 @@ const requestNotificationPermission = async (): Promise<NotificationPermission> 
 const sendBrowserNotification = (title: string, body: string) => {
   if ('Notification' in window && Notification.permission === 'granted') {
     try {
-      new Notification(title, {
-        body,
-        icon: '/vite.svg',
-      });
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then((reg) => {
+          reg.showNotification(title, {
+            body,
+            icon: '/favicon.svg',
+            badge: '/favicon.svg',
+            tag: 'notireact-mention',
+            renotify: true,
+          } as any);
+        }).catch((err) => {
+          console.warn("Service worker ready failed, using standard Notification:", err);
+          new Notification(title, {
+            body,
+            icon: '/favicon.svg',
+          });
+        });
+      } else {
+        new Notification(title, {
+          body,
+          icon: '/favicon.svg',
+        });
+      }
     } catch (e) {
       console.warn("Browser notification failed to fire:", e);
     }
@@ -121,6 +139,13 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Register Service Worker to handle click events (e.g. restoring window focus)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
+        .catch((err) => console.warn('Service Worker registration failed:', err));
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       setLoading(false);
@@ -335,6 +360,7 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeTab, setActiveTab] = useState<'inbox' | 'global' | 'sent'>('inbox');
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
+  const [showBanner, setShowBanner] = useState(true);
 
   // Username edit states
   const [editingUsername, setEditingUsername] = useState(false);
@@ -363,6 +389,19 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
   useEffect(() => {
     if ('Notification' in window) {
       setNotifPermission(Notification.permission);
+      
+      // Auto prompt on mount if default
+      if (Notification.permission === 'default') {
+        setTimeout(() => {
+          requestNotificationPermission().then((perm) => {
+            setNotifPermission(perm);
+            if (perm === 'granted') {
+              addToast('Notifications Enabled', 'You will receive desktop push notification updates!', '🟢');
+              playNotificationSound();
+            }
+          });
+        }, 1500);
+      }
     }
   }, []);
 
@@ -453,8 +492,10 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
     if (permission === 'granted') {
       addToast('Notifications Enabled', 'You will receive desktop push notification updates!', '🟢');
       playNotificationSound();
+    } else if (permission === 'denied') {
+      addToast('Notifications Blocked', 'Permission is blocked in browser settings. Click the lock/settings icon next to your URL bar to allow notifications.', '❌');
     } else {
-      addToast('Permission Denied', 'Browser notifications were blocked.', '🔴');
+      addToast('Permission Dismissed', 'Notifications were not enabled.', '⚠️');
     }
   };
 
@@ -668,6 +709,22 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
 
   return (
     <>
+      {notifPermission === 'default' && showBanner && (
+        <div className="notification-banner">
+          <div className="notification-banner-content">
+            <span>🔔</span>
+            <span><strong>Enable desktop notifications</strong> to receive instant alerts when someone tags you.</span>
+          </div>
+          <div className="notification-banner-actions">
+            <button className="btn btn-primary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', borderRadius: '6px', width: 'auto' }} onClick={handleToggleBrowserNotifications}>
+              Enable
+            </button>
+            <button className="btn btn-secondary" style={{ padding: '0.35rem 0.5rem', fontSize: '0.8rem', width: 'auto', border: 'none', background: 'none' }} onClick={() => setShowBanner(false)}>
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       {/* Navigation Header */}
       <header className="navbar">
         <div className="nav-brand">
@@ -740,10 +797,14 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
               <span className="noti-toggle-label">Browser Notifications</span>
               <button 
                 onClick={handleToggleBrowserNotifications}
-                className={`badge-status ${notifPermission === 'granted' ? 'enabled' : 'disabled'}`}
+                className={`badge-status ${
+                  notifPermission === 'granted' ? 'enabled' : 
+                  notifPermission === 'denied' ? 'blocked' : 'disabled'
+                }`}
                 style={{ border: 'none', cursor: 'pointer' }}
               >
-                {notifPermission === 'granted' ? 'Enabled' : 'Disabled'}
+                {notifPermission === 'granted' ? 'Enabled' : 
+                 notifPermission === 'denied' ? 'Blocked (Reset)' : 'Disabled'}
               </button>
             </div>
             <div className="noti-toggle-container">
