@@ -1,22 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
   onAuthStateChanged,
   updateProfile
 } from 'firebase/auth';
-import { 
-  collection, 
-  addDoc, 
-  onSnapshot, 
-  query, 
-  orderBy, 
-  getDocs, 
-  doc, 
-  setDoc, 
-  updateDoc, 
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  getDocs,
+  doc,
+  setDoc,
+  updateDoc,
   where,
   limit,
   serverTimestamp,
@@ -54,7 +54,7 @@ interface ToastType {
 const playNotificationSound = () => {
   try {
     const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    
+
     // Note 1 (C5)
     const osc1 = audioCtx.createOscillator();
     const gain1 = audioCtx.createGain();
@@ -182,17 +182,17 @@ export default function App() {
       </div>
 
       <Routes>
-        <Route 
-          path="/login" 
-          element={currentUser ? <Navigate to="/dashboard" replace /> : <Login addToast={addToast} />} 
+        <Route
+          path="/login"
+          element={currentUser ? <Navigate to="/dashboard" replace /> : <Login addToast={addToast} />}
         />
-        <Route 
-          path="/dashboard" 
-          element={currentUser ? <Dashboard currentUser={currentUser} addToast={addToast} /> : <Navigate to="/login" replace />} 
+        <Route
+          path="/dashboard"
+          element={currentUser ? <Dashboard currentUser={currentUser} addToast={addToast} /> : <Navigate to="/login" replace />}
         />
-        <Route 
-          path="*" 
-          element={<Navigate to={currentUser ? "/dashboard" : "/login"} replace />} 
+        <Route
+          path="*"
+          element={<Navigate to={currentUser ? "/dashboard" : "/login"} replace />}
         />
       </Routes>
     </BrowserRouter>
@@ -223,7 +223,7 @@ function Login({ addToast }: { addToast: (t: string, m: string, i?: string) => v
         setSubmitting(false);
         return;
       }
-      
+
       try {
         // 1. Check unique username in Firestore
         const q = query(collection(db, 'profiles'), where('username', '==', sanitizedUsername));
@@ -271,7 +271,7 @@ function Login({ addToast }: { addToast: (t: string, m: string, i?: string) => v
       <div className="auth-card glass-container">
         <div className="auth-header">
           <div className="nav-brand" style={{ justifyContent: 'center', marginBottom: '1rem' }}>
-            <span>⚡</span> NotiReact
+            MChat
           </div>
           <h2>{isSignUp ? 'Create Account' : 'Welcome Back'}</h2>
           <p>{isSignUp ? 'Sign up to message & tag other users with instant notifications' : 'Login to view your mentions and chat feeds'}</p>
@@ -332,8 +332,8 @@ function Login({ addToast }: { addToast: (t: string, m: string, i?: string) => v
 
         <div className="auth-footer">
           {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-          <button 
-            className="tab-btn" 
+          <button
+            className="tab-btn"
             style={{ color: 'var(--accent-primary)', fontSize: '0.9rem', padding: '0 0.25rem', border: 'none', background: 'none', cursor: 'pointer', textDecoration: 'underline' }}
             onClick={() => {
               setIsSignUp(!isSignUp);
@@ -389,7 +389,7 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
   useEffect(() => {
     if ('Notification' in window) {
       setNotifPermission(Notification.permission);
-      
+
       // Auto prompt on mount if default
       if (Notification.permission === 'default') {
         setTimeout(() => {
@@ -429,7 +429,7 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
     const qMessages = query(collection(db, 'messages'), orderBy('created_at', 'desc'), limit(100));
     const unsubMessages = onSnapshot(qMessages, (snap) => {
       const list: Message[] = [];
-      
+
       snap.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const mData = change.doc.data();
@@ -488,7 +488,7 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
   const handleToggleBrowserNotifications = async () => {
     const permission = await requestNotificationPermission();
     setNotifPermission(permission);
-    
+
     if (permission === 'granted') {
       addToast('Notifications Enabled', 'You will receive desktop push notification updates!', '🟢');
       playNotificationSound();
@@ -575,10 +575,10 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
     const selectionStart = textarea.selectionStart;
     const textBeforeCursor = val.slice(0, selectionStart);
     const textAfterCursor = val.slice(selectionStart);
-    
+
     const words = textBeforeCursor.split(/\s+/);
     words[words.length - 1] = `@${targetUsername}`;
-    
+
     const newTextBefore = words.join(' ') + ' ';
     setComposeContent(newTextBefore + textAfterCursor);
     setShowAutocomplete(false);
@@ -690,10 +690,10 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
   const globalMessages = messages;
   const sentMessages = messages.filter((m) => m.sender_id === currentUser.uid);
 
-  const displayMessages = 
-    activeTab === 'inbox' ? inboxMessages : 
-    activeTab === 'global' ? globalMessages : 
-    sentMessages;
+  const displayMessages =
+    activeTab === 'inbox' ? inboxMessages :
+      activeTab === 'global' ? globalMessages :
+        sentMessages;
 
   const getRelativeTime = (timestamp: string) => {
     const diffMs = new Date().getTime() - new Date(timestamp).getTime();
@@ -742,7 +742,7 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
 
       {/* Main Grid Layout */}
       <main className="dashboard-grid">
-        
+
         {/* Sidebar Info Panel */}
         <section className="profile-card glass-container">
           <div className="profile-header">
@@ -765,7 +765,7 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <h3>@{profile?.username || 'user'}</h3>
-                  <button 
+                  <button
                     style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', fontSize: '0.8rem' }}
                     onClick={() => {
                       setTempUsername(profile?.username || '');
@@ -795,16 +795,15 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
             <h4>Alert Channels</h4>
             <div className="noti-toggle-container">
               <span className="noti-toggle-label">Browser Notifications</span>
-              <button 
+              <button
                 onClick={handleToggleBrowserNotifications}
-                className={`badge-status ${
-                  notifPermission === 'granted' ? 'enabled' : 
+                className={`badge-status ${notifPermission === 'granted' ? 'enabled' :
                   notifPermission === 'denied' ? 'blocked' : 'disabled'
-                }`}
+                  }`}
                 style={{ border: 'none', cursor: 'pointer' }}
               >
-                {notifPermission === 'granted' ? 'Enabled' : 
-                 notifPermission === 'denied' ? 'Blocked (Reset)' : 'Disabled'}
+                {notifPermission === 'granted' ? 'Enabled' :
+                  notifPermission === 'denied' ? 'Blocked (Reset)' : 'Disabled'}
               </button>
             </div>
             <div className="noti-toggle-container">
@@ -816,7 +815,7 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
 
         {/* Messaging & Chat List Panel */}
         <section className="feed-panel">
-          
+
           {/* Post Message Box */}
           <div className="compose-card glass-container">
             <form onSubmit={handleSendMessage}>
@@ -860,21 +859,21 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
 
           {/* List Section Tabs */}
           <div className="tabs-container">
-            <button 
+            <button
               className={`tab-btn ${activeTab === 'inbox' ? 'active' : ''}`}
               onClick={() => setActiveTab('inbox')}
             >
               Mentions Inbox
               <span className="tab-count">{inboxMessages.length}</span>
             </button>
-            <button 
+            <button
               className={`tab-btn ${activeTab === 'global' ? 'active' : ''}`}
               onClick={() => setActiveTab('global')}
             >
               Global Feed
               <span className="tab-count">{globalMessages.length}</span>
             </button>
-            <button 
+            <button
               className={`tab-btn ${activeTab === 'sent' ? 'active' : ''}`}
               onClick={() => setActiveTab('sent')}
             >
@@ -889,11 +888,11 @@ function Dashboard({ currentUser, addToast }: { currentUser: any, addToast: (t: 
               <div className="empty-state glass-container">
                 <p style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>📭 Nothing here yet</p>
                 <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
-                  {activeTab === 'inbox' 
-                    ? 'No one has tagged you in a message. Ask another user to tag you!' 
-                    : activeTab === 'sent' 
-                    ? 'You have not sent any messages. Try typing one above and tagging a user!' 
-                    : 'The global chat is currently silent.'}
+                  {activeTab === 'inbox'
+                    ? 'No one has tagged you in a message. Ask another user to tag you!'
+                    : activeTab === 'sent'
+                      ? 'You have not sent any messages. Try typing one above and tagging a user!'
+                      : 'The global chat is currently silent.'}
                 </p>
               </div>
             ) : (
